@@ -42,62 +42,22 @@ int main(){
 
 	Render::isRunning = true;
 
-	//Having a vertex buffer for 3 vectors for a triangle, X/Y/Z
-	//static const GLfloat vertexBufferData[] = {
-	//	-0.5f, -0.5f, 0.0f, //First vertice at the bottom left
-	//	0.5f, -0.5f, 0.0f, //Second vertice at the bottom right
-	//	0.0f,  0.5f, 0.0f, //Third vertice at the middle top of the screen
-	//};
+	static const GLfloat g_TriangleVerts[] = {
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+		0.0f,  1.0f, 0.0f,
+	};
 
 	//First, create the variable for the vertex buffer then put turn that variable into a vertex buffer
-	GLuint vertexBuffer;
-	glGenBuffers(1, &vertexBuffer);
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
 	//This will talk about our vertex buffer??? im not sure what this means
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	//Give the vertices to OpenGL
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Cube::cubeVerticies), Cube::cubeVerticies, GL_STATIC_DRAW);
-
-	//Make a buffer and bind data to it
-	GLuint colorbuffer;
-	glGenBuffers(1, &colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Cube::cubeColorData), Cube::cubeColorData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_TriangleVerts), g_TriangleVerts, GL_STATIC_DRAW);
 
 	//Compile shader
 	GLuint shaderID = Shader::LoadShaders("shaders/testVertexShader.glsl", "shaders/testFragmentShader.glsl");
-
-
-	//Now for persepctive
-	// Projection matrix: 45° Field of View, 4:3 ratio, display range: 0.1 unit <-> 100 units
-	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), (float)Render::windowWidth / (float)Render::windowHeight, 0.1f, 400.0f);
-
-	// Or, for an ortho camera:
-	//glm::mat4 Projection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In world coordinates
-
-	// Camera matrix
-	glm::mat4 View = glm::lookAt(
-		glm::vec3(4, 3, 3), // Camera is at (4,3,3), in World Space
-		glm::vec3(0, 0, 0), // and looks at the origin
-		glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-	);
-
-	// Model matrix: an identity matrix (model will be at the origin)
-	glm::mat4 Model = glm::mat4(1.0f);
-	// Our ModelViewProjection: multiplication of our 3 matrices
-	glm::mat4 mvp = Projection * View * Model; // Remember, matrix multiplication is the other way around
-
-	// Get a handle for our "MVP" uniform
-	// Only during the initialisation
-	GLuint MatrixID = glGetUniformLocation(shaderID, "MVP");
-
-	// Send our transformation to the currently bound shader, in the "MVP" uniform
-	// This is done in the main loop since each model will have a different MVP matrix (At least for the M part)
-	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mvp[0][0]);
-
-
-	glEnable(GL_DEPTH_TEST);
-	// Accept fragment if it closer to the camera than the former one
-	glDepthFunc(GL_LESS);
 
 	while (Render::isRunning) {
 		//Event Polling
@@ -116,7 +76,7 @@ int main(){
 		// Clear the screen and set draw color
 		glClearColor(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 1.0f);
 		// Enable depth test
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		//Draw stuff here
 		//Drawing the triangle
@@ -130,7 +90,7 @@ int main(){
 		
 		//Enables vertex attribute array
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer); //Bind a named buffer object to a specific buffer
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer); //Bind a named buffer object to a specific buffer
 		glVertexAttribPointer(
 			0,                  //Set attribute to 0, no reason but make sure to match the layout in the shader
 			3,                  //Number of components
@@ -140,26 +100,12 @@ int main(){
 			(void*)0            //Offset of the first component in the array
 		);
 		//Finally draw the square
-		glDrawArrays(GL_TRIANGLES, 0, 12*3); //Starting from vertex 0 draw the square
-
-		// 2nd attribute buffer : colors
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-		glVertexAttribPointer(
-			1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
-
+		glDrawArrays(GL_TRIANGLES, 0, 3); //Starting from vertex 0 draw the triangle
+		
 		glDisableVertexAttribArray(0); //Disables the array
 
 		//Update the screen
 		SDL_GL_SwapWindow(window);
-
-
 	}
 	
 	//End the subsystem and destroy renderer and window
